@@ -1,7 +1,8 @@
 "use strict";
 
-const NUMBER_API_BASE_URL = 'http://numbersapi.com'
+const NUMBER_API_BASE_URL = 'http://numbersapi.com';
 
+/** Given an integer, call the numbers api and log a fact about the number */
 async function showNumberTrivia(num) {
   const resp = await fetch(`${NUMBER_API_BASE_URL}/${num}?json`);
   const trivia = await resp.json();
@@ -9,29 +10,31 @@ async function showNumberTrivia(num) {
   console.log(trivia.text);
 }
 
+/** Given an array of integers, log a fact about one of them */
 async function showNumberRace(nums) {
-  const promise1 = fetch(`${NUMBER_API_BASE_URL}/${nums[0]}?json`);
-  const promise2 = fetch(`${NUMBER_API_BASE_URL}/${nums[1]}?json`);
-  const promise3 = fetch(`${NUMBER_API_BASE_URL}/${nums[2]}?json`);
-  const promise4 = fetch(`${NUMBER_API_BASE_URL}/${nums[3]}?json`);
 
-  const resp = await Promise.race([promise1, promise2, promise3, promise4]);
+  const promiseArray = nums.map(num => fetch(`${NUMBER_API_BASE_URL}/${num}?json`));
+
+  const resp = await Promise.race(promiseArray);
   const trivia = await resp.json();
 
   console.log(trivia.text);
 }
 
+/** Given an array of values, log an array of facts for all the valid
+ * values, and log an array of all the invalid values with their status text
+ */
 async function showNumberAll(nums) {
-  const promise1 = fetch(`${NUMBER_API_BASE_URL}/${nums[0]}?json`);
-  const promise2 = fetch(`${NUMBER_API_BASE_URL}/${nums[1]}?json`);
-  const promise3 = fetch(`${NUMBER_API_BASE_URL}/${nums[2]}?json`);
-  const promise4 = fetch(`${NUMBER_API_BASE_URL}/${nums[3]}?json`);
+  const promiseArray = nums.map(num => fetch(`${NUMBER_API_BASE_URL}/${num}?json`));
 
-  const resps = await Promise.allSettled([promise1, promise2, promise3, promise4]);
+  const resps = await Promise.allSettled(promiseArray);
 
-  successfulResps = resps.filter(resp => resp.status === "fulfilled" && resp.value.ok === true);
-  failedResps = resps.filter(resp => resp.status === "rejected" || resp.value.ok === false);
+  const successfulResps = resps.filter(resp =>
+    resp.status === "fulfilled" && resp.value.ok === true);
+  const failedResps = resps.filter(resp =>
+    resp.status === "rejected" || resp.value.ok === false);
 
+  //TODO: use a better name, "promises" is not specific
   const promises = successfulResps.map(async resp => {
     const trivia = await resp.value.json();
     return trivia.text;
@@ -43,4 +46,11 @@ async function showNumberAll(nums) {
 
   console.log(texts);
   console.log(errors);
+}
+
+/** calls several functions in order */
+async function main() {
+  await showNumberTrivia(12);
+  await showNumberRace([1, 5, 23, 15]);
+  await showNumberAll([1, 15, "WRONG", 5]);
 }
